@@ -50,6 +50,15 @@ setup_firewall() {
   if ufw --force enable; then record_success "UFW aktif"; else record_warning "UFW etkinleştirme"; fi
 }
 
+# Bazı ortamlarda Plesk kurulumu sonrası HTTP/HTTPS kuralları tekrar gereksinim
+ensure_http_https_open() {
+  info "HTTP/HTTPS erişimi kesinleştiriliyor (UFW)"
+  ufw allow 80/tcp || true
+  ufw allow 443/tcp || true
+  ufw reload || true
+  record_success "UFW 80/443 açık ve reload"
+}
+
 install_plesk() {
   if ! command -v plesk >/dev/null 2>&1; then
     log "Plesk kurulumu başlatılıyor (stable)"
@@ -187,6 +196,9 @@ main() {
   install_ioncube
 
   warn "PHP 7.1/7.2/7.3 Ubuntu 22.04 üzerinde resmi paket olarak sunulmaz. Gerekirse ayrı legacy VM veya Docker önerilir."
+
+  # Güvenlik duvarında 80/443 açık olduğundan emin ol
+  ensure_http_https_open
 
   show_summary
   log "Kurulum tamamlandı. Panele: https://$(curl -s ifconfig.me):8443"
